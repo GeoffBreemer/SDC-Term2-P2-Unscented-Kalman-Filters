@@ -8,6 +8,7 @@
 #include "ukf.h"
 #include "ground_truth_package.h"
 //#include "measurement_package.h"
+#include "tools.h"
 
 using namespace std;
 using Eigen::MatrixXd;
@@ -151,6 +152,9 @@ int main(int argc, char* argv[]) {
   out_file_ << "py_measured" << "\t";
   out_file_ << "px_true" << "\t";
   out_file_ << "py_true" << "\t";
+  out_file_ << "v_true" << "\t";
+  out_file_ << "yaw_angle_true" << "\t";
+  out_file_ << "yaw_rate_true" << "\t";
   out_file_ << "vx_true" << "\t";
   out_file_ << "vy_true" << "\t";
   out_file_ << "NIS" << "\n";
@@ -175,26 +179,48 @@ int main(int argc, char* argv[]) {
       out_file_ << measurement_pack_list[k].raw_measurements_(1) << "\t";
     } else if (measurement_pack_list[k].sensor_type_ == MeasurementPackage::RADAR) {
       // output the estimation in the cartesian coordinates
-      float ro = measurement_pack_list[k].raw_measurements_(0);
-      float phi = measurement_pack_list[k].raw_measurements_(1);
+//      float ro = measurement_pack_list[k].raw_measurements_(0);
+//      float phi = measurement_pack_list[k].raw_measurements_(1);
+//      out_file_ << ro * cos(phi) << "\t"; // p1_meas
+//      out_file_ << ro * sin(phi) << "\t"; // p2_meas
 
-      out_file_ << ro * cos(phi) << "\t"; // p1_meas
-      out_file_ << ro * sin(phi) << "\t"; // p2_meas
+      double px, py;
+      Tools::polar_to_cartesian(measurement_pack_list[k], px, py);
+      out_file_ << px << "\t"; // p1_meas
+      out_file_ << py << "\t"; // p2_meas
     }
 
     // output the ground truth packages
-    out_file_ << gt_pack_list[k].gt_values_(0) << "\t";
-    out_file_ << gt_pack_list[k].gt_values_(1) << "\t";
-    out_file_ << gt_pack_list[k].gt_values_(2) << "\t";
-    out_file_ << gt_pack_list[k].gt_values_(3) << "\t";
+//    out_file_ << gt_pack_list[k].gt_values_(0) << "\t";
+//    out_file_ << gt_pack_list[k].gt_values_(1) << "\t";
+//    out_file_ << gt_pack_list[k].gt_values_(2) << "\t";
+//    out_file_ << gt_pack_list[k].gt_values_(3) << "\t";
+
+    double x_gt = gt_pack_list[k].gt_values_(0);
+    double y_gt = gt_pack_list[k].gt_values_(1);
+    double vx_gt = gt_pack_list[k].gt_values_(2);
+    double vy_gt = gt_pack_list[k].gt_values_(3);
+    double v_gt = sqrt(vx_gt * vx_gt + vy_gt * vy_gt);
+    double yaw_gt = fabs(vx_gt) > APPROX_ZERO ? atan(vy_gt / vx_gt) : 0;
+    double yaw_rate_gt = 0;
+
+    out_file_ << x_gt << "\t";
+    out_file_ << y_gt << "\t";
+    out_file_ << v_gt << "\t";
+    out_file_ << yaw_gt << "\t";
+    out_file_ << yaw_rate_gt << "\t";
+    out_file_ << vx_gt << "\t";
+    out_file_ << vy_gt << "\t";
 
     // output the NIS values
-    
-    if (measurement_pack_list[k].sensor_type_ == MeasurementPackage::LASER) {
-      out_file_ << ukf.NIS_laser_ << "\n";
-    } else if (measurement_pack_list[k].sensor_type_ == MeasurementPackage::RADAR) {
-      out_file_ << ukf.NIS_radar_ << "\n";
-    }
+//    if (measurement_pack_list[k].sensor_type_ == MeasurementPackage::LASER) {
+//      out_file_ << ukf.NIS_laser_ << "\n";
+//    } else if (measurement_pack_list[k].sensor_type_ == MeasurementPackage::RADAR) {
+//      out_file_ << ukf.NIS_radar_ << "\n";
+//    }
+
+    out_file_ << ukf.NIS_laser_ << "\t";
+    out_file_ << ukf.NIS_radar_ << endl;
 
     // convert ukf x vector to cartesian to compare to ground truth
     VectorXd ukf_x_cartesian_ = VectorXd(4);

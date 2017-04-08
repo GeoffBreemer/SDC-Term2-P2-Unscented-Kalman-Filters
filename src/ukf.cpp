@@ -16,6 +16,7 @@ using std::vector;
 // https://discussions.udacity.com/t/numerical-instability-of-the-implementation/230449/11
 
 // TODO: try instead of while: atan2(sin(angle), cos(angle));
+// TODO: or: http://stackoverflow.com/questions/11498169/dealing-with-angle-wrap-in-c-code
 
 UKF::UKF(bool enable_radar, bool enable_lidar) {
   use_laser_ = enable_radar;
@@ -30,6 +31,9 @@ UKF::UKF(bool enable_radar, bool enable_lidar) {
   n_z_lidar = 2;
   lambda_ = 3 - n_aug_;
 
+  NIS_laser_ = 0;
+  NIS_radar_ = 0;
+
   x_ = VectorXd(n_x_);
   P_ = MatrixXd(n_x_, n_x_);
   H_laser_ = MatrixXd(n_z_lidar, n_x_);
@@ -39,7 +43,7 @@ UKF::UKF(bool enable_radar, bool enable_lidar) {
   w_ = VectorXd(n_sigma);
 
   // Tunable parameters - CHANGE WITH CARE
-  P_ << .1, 0, 0, 0, 0,        // good: identity
+  P_ << .1, 0, 0, 0, 0,        // good: identity,  both: 0.1 diagonal
           0, .1, 0, 0, 0,
           0, 0, .1, 0, 0,
           0, 0, 0, .1, 0,
@@ -140,8 +144,10 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   // 2. Measurement update/correction step
   if (use_radar_ && meas_package.sensor_type_ == MeasurementPackage::RADAR) {
     UpdateRadar(meas_package, Xsig_pred);
+    NIS_laser_ = 0;
   } else if (use_laser_ && meas_package.sensor_type_ == MeasurementPackage::LASER) {
     UpdateLaser(meas_package.raw_measurements_);
+    NIS_radar_ = 0;
   }
 }
 
@@ -240,10 +246,9 @@ void UKF::PredictMeanAndCovariance(MatrixXd Xsig_pred) {
   // Predict state covariance matrix
   P_.fill(0);
   MatrixXd prod;
-//  for(int i=0;i<n_sigma;i++) {            // TODO
+  for(int i=0;i<n_sigma;i++) {            // TODO
 //    prod = Xsig_pred.col(i) - x_;         // TODO
-
-  for(int i=1;i<n_sigma;i++) {
+//  for(int i=1;i<n_sigma;i++) {
     prod = Xsig_pred.col(i) - Xsig_pred.col(0);
 
     // Normalise psi to be between -pi and pi
@@ -284,9 +289,9 @@ void UKF::PredictRadarMeasurement(MatrixXd Xsig_pred, VectorXd* z_pred_out, Matr
   // Calculate measurement covariance matrix S
   S.fill(0);
   MatrixXd prod;
-//  for(int i=0;i<n_sigma;i++) {          // TODO
+  for(int i=0;i<n_sigma;i++) {          // TODO
 //    prod = Zsig.col(i) - z_pred;        // TODO
-  for(int i=1;i<n_sigma;i++) {
+//  for(int i=1;i<n_sigma;i++) {
     prod = Zsig.col(i) - Zsig.col(0);
 
     // normalise phi to be between -pi and pi
@@ -309,9 +314,9 @@ void UKF::UpdateStateRadar(MatrixXd Xsig_pred, MatrixXd Zsig, VectorXd z_pred, M
 
   // Calculate cross correlation matrix
   Tc.fill(0);
-//  for (int i=0;i<n_sigma;i++) {                 // TODO
+  for (int i=0;i<n_sigma;i++) {                 // TODO
 //    MatrixXd first = Xsig_pred.col(i) - x_;     // TODO
-  for (int i=1;i<n_sigma;i++) {
+//  for (int i=1;i<n_sigma;i++) {
     MatrixXd first = Xsig_pred.col(i) - Xsig_pred.col(0);
 
     while (first(COL_PSI)> M_PI) first(COL_PSI)-=2.*M_PI;

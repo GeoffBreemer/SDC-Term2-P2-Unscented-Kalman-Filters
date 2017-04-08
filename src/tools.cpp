@@ -6,7 +6,6 @@ using Eigen::MatrixXd;
 using std::vector;
 using namespace std;
 
-
 namespace Tools {
   VectorXd CalculateRMSE(const vector<VectorXd> &estimations,
                          const vector<VectorXd> &ground_truth) {
