@@ -7,7 +7,7 @@
 #include "Eigen/Dense"
 #include "ukf.h"
 #include "ground_truth_package.h"
-#include "measurement_package.h"
+//#include "measurement_package.h"
 
 using namespace std;
 using Eigen::MatrixXd;
@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) {
   }
 
   // Create a UKF instance
-  UKF ukf;
+  UKF ukf(true, true);
 
   // used to compute the RMSE later
   vector<VectorXd> estimations;
@@ -211,7 +211,7 @@ int main(int argc, char* argv[]) {
   }
 
   // compute the accuracy (RMSE)
-  cout << "Accuracy - RMSE:" << endl << Tools::CalculateRMSE(estimations, ground_truth) << endl;
+  cout << endl << "Accuracy - RMSE:" << endl << Tools::CalculateRMSE(estimations, ground_truth) << endl;
 
   // close files
   if (out_file_.is_open()) {

@@ -42,11 +42,11 @@ private:
   MatrixXd R_radar_;      // Measurement covariance matrix - radar measurement noise
   MatrixXd R_laser_;      // Measurement covariance matrix - laser measurement noise
 
+  VectorXd w_;      // Weights of sigma points
+
 public:
 
-  long long time_us_;     // time when the state is true, in us
-
-  VectorXd weights_;      // Weights of sigma points
+  long long previous_timestamp_;     // time when the state is true, in us
 
   double NIS_radar_;      // the current NIS for radar
   double NIS_laser_;      // the current NIS for laser
@@ -55,7 +55,7 @@ public:
   virtual ~UKF();
 
   // Getters
-  Eigen::VectorXd getx_();
+  VectorXd getx_();
 
   /**
    * ProcessMeasurement
@@ -69,12 +69,6 @@ public:
    * @param delta_t Time between k and k+1 in s
    */
   MatrixXd Prediction(double delta_t);
-
-  /**
-   * Updates the state and the state covariance matrix using a laser measurement
-   * @param meas_package The measurement at k+1
-   */
-  void UpdateLidar(MeasurementPackage meas_package);
 
   /**
    * Updates the state and the state covariance matrix using a radar measurement
@@ -98,7 +92,7 @@ public:
 
   // Step 5
   void UpdateStateRadar(MatrixXd Xsig_pred, MatrixXd Zsig, VectorXd z_pred, MatrixXd S, VectorXd z);
-  void UpdateStateLaser(VectorXd z);
+  void UpdateLaser(VectorXd z);
 };
 
 #endif /* UKF_H */
