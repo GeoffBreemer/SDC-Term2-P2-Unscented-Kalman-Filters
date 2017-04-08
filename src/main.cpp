@@ -155,31 +155,29 @@ int main(int argc, char* argv[]) {
   out_file_ << "vy_true" << "\t";
   out_file_ << "NIS" << "\n";
 
-
   for (size_t k = 0; k < number_of_measurements; ++k) {
+    cout << k << " ";
+
     // Call the UKF-based fusion
     ukf.ProcessMeasurement(measurement_pack_list[k]);
 
     // output the estimation
     out_file_ << ukf.getx_()(0) << "\t"; // pos1 - est
     out_file_ << ukf.getx_()(1) << "\t"; // pos2 - est
-    out_file_ << ukf.getx_()(2) << "\t"; // vel_abs -est
-    out_file_ << ukf.getx_()(3) << "\t"; // yaw_angle -est
-    out_file_ << ukf.getx_()(4) << "\t"; // yaw_rate -est
+    out_file_ << ukf.getx_()(2) << "\t"; // vel_abs - est
+    out_file_ << ukf.getx_()(3) << "\t"; // yaw_angle - est
+    out_file_ << ukf.getx_()(4) << "\t"; // yaw_rate - est
 
     // output the measurements
     if (measurement_pack_list[k].sensor_type_ == MeasurementPackage::LASER) {
       // output the estimation
-
-      // p1 - meas
       out_file_ << measurement_pack_list[k].raw_measurements_(0) << "\t";
-
-      // p2 - meas
       out_file_ << measurement_pack_list[k].raw_measurements_(1) << "\t";
     } else if (measurement_pack_list[k].sensor_type_ == MeasurementPackage::RADAR) {
       // output the estimation in the cartesian coordinates
       float ro = measurement_pack_list[k].raw_measurements_(0);
       float phi = measurement_pack_list[k].raw_measurements_(1);
+
       out_file_ << ro * cos(phi) << "\t"; // p1_meas
       out_file_ << ro * sin(phi) << "\t"; // p2_meas
     }
@@ -198,7 +196,6 @@ int main(int argc, char* argv[]) {
       out_file_ << ukf.NIS_radar_ << "\n";
     }
 
-
     // convert ukf x vector to cartesian to compare to ground truth
     VectorXd ukf_x_cartesian_ = VectorXd(4);
 
@@ -211,7 +208,6 @@ int main(int argc, char* argv[]) {
     
     estimations.push_back(ukf_x_cartesian_);
     ground_truth.push_back(gt_pack_list[k].gt_values_);
-
   }
 
   // compute the accuracy (RMSE)

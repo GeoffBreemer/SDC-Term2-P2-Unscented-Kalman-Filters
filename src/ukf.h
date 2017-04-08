@@ -19,9 +19,13 @@ private:
 
   int n_x_;               // State dimension
   int n_aug_;             // Augmented state dimension
+  int n_sigma;
+  int n_z_radar;          // Radar measurement dimension: r, phi, and r_dot
+  int n_z_lidar;          // Laser measurement dimension: px and py
 
   VectorXd x_;            // state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
   MatrixXd P_;            // state covariance matrix
+  MatrixXd Q_;            // augmented covariance matrix
   double lambda_;         // Sigma point spreading parameter
 
   double std_a_;          // Process noise standard deviation longitudinal acceleration in m/s^2
@@ -34,7 +38,9 @@ private:
   double std_radphi_;     // Radar measurement noise standard deviation angle in rad
   double std_radrd_ ;     // Radar measurement noise standard deviation radius change in m/s
 
-  MatrixXd Xsig_pred_;    // predicted sigma points matrix
+  MatrixXd H_laser_;      // Measurement function H matrix
+  MatrixXd R_radar_;      // Measurement covariance matrix - radar measurement noise
+  MatrixXd R_laser_;      // Measurement covariance matrix - laser measurement noise
 
 public:
 
@@ -62,7 +68,7 @@ public:
    * matrix
    * @param delta_t Time between k and k+1 in s
    */
-  void Prediction(double delta_t);
+  MatrixXd Prediction(double delta_t);
 
   /**
    * Updates the state and the state covariance matrix using a laser measurement
@@ -74,24 +80,25 @@ public:
    * Updates the state and the state covariance matrix using a radar measurement
    * @param meas_package The measurement at k+1
    */
-  void UpdateRadar(MeasurementPackage meas_package);
+  void UpdateRadar(MeasurementPackage meas_package, MatrixXd Xsig_pred);
 
   //Step 1
-  void GenerateSigmaPoints(MatrixXd* Xsig_out);
-  void AugmentedSigmaPoints(MatrixXd* Xsig_out);
+//  MatrixXd GenerateSigmaPoints();
+  MatrixXd AugmentedSigmaPoints();
 
   // Step 2
-  void SigmaPointPrediction(MatrixXd* Xsig_out);
+  MatrixXd SigmaPointPrediction(MatrixXd Xsig_aug, double delta_t);
 
   // Step 3
-  void PredictMeanAndCovariance(VectorXd* x_pred, MatrixXd* P_pred);
+  void PredictMeanAndCovariance(MatrixXd Xsig_pred);
 
   // Step 4
-  void PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out);
-  void PredictLaserMeasurement(VectorXd* z_out, MatrixXd* S_out);
+  void PredictRadarMeasurement(MatrixXd Xsig_pred, VectorXd* z_pred_out, MatrixXd* S_out, MatrixXd* Zsig_out);
+  void PredictLaserMeasurement(MatrixXd Xsig_pred, VectorXd* z_pred_out, MatrixXd* S_out, MatrixXd* Zsig_out);
 
   // Step 5
-  void UpdateState(VectorXd* x_out, MatrixXd* P_out);
+  void UpdateStateRadar(MatrixXd Xsig_pred, MatrixXd Zsig, VectorXd z_pred, MatrixXd S, VectorXd z);
+  void UpdateStateLaser(VectorXd z);
 };
 
 #endif /* UKF_H */
