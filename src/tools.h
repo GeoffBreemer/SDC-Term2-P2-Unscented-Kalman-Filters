@@ -15,6 +15,9 @@ namespace Tools {
 
   // Convert state from cartesian to polar coordinates
   Eigen::VectorXd cartesian_to_polar(const Eigen::VectorXd x);
+
+  // Constrain angle to -PI to PI
+  double constrainAngle(double angle);
 };
 
 #endif /* TOOLS_H_ */

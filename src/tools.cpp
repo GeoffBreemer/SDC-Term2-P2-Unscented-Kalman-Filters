@@ -39,7 +39,7 @@ namespace Tools {
     py = measurement_pack.raw_measurements_[0] * sin(phi);
   }
 
-  Eigen::VectorXd cartesian_to_polar(const Eigen::VectorXd x) {
+  VectorXd cartesian_to_polar(const Eigen::VectorXd x) {
     VectorXd z_pred(3);
 
     // Unpack the state vector
@@ -67,5 +67,12 @@ namespace Tools {
     z_pred[2] = (px * vx + py * vy) / rho;
 
     return z_pred;
+  }
+
+  double constrainAngle(double angle){
+    angle = fmod(angle + M_PI,2*M_PI);
+    if (angle < 0)
+      angle += 2*M_PI;
+    return angle - M_PI;
   }
 }

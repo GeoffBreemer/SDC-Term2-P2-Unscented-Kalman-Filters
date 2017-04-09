@@ -14,6 +14,8 @@ using Eigen::VectorXd;
 class UKF {
 private:
   bool is_initialized_;
+  long long previous_timestamp_;
+
   bool use_laser_;        // if this is false, laser measurements will be ignored (except for init)
   bool use_radar_;        // if this is false, radar measurements will be ignored (except for init)
 
@@ -21,12 +23,14 @@ private:
   int n_aug_;             // Augmented state dimension
   int n_sigma;
   int n_z_radar;          // Radar measurement dimension: r, phi, and r_dot
-  int n_z_lidar;          // Laser measurement dimension: px and py
+  int n_z_laser;          // Laser measurement dimension: px and py
 
   VectorXd x_;            // state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
   MatrixXd P_;            // state covariance matrix
   MatrixXd Q_;            // augmented covariance matrix
   double lambda_;         // Sigma point spreading parameter
+  double NIS_radar_;      // the current NIS for radar
+  double NIS_laser_;      // the current NIS for laser
 
   double std_a_;          // Process noise standard deviation longitudinal acceleration in m/s^2
   double std_yawdd_;      // Process noise standard deviation yaw acceleration in rad/s^2
@@ -38,60 +42,44 @@ private:
   double std_radphi_;     // Radar measurement noise standard deviation angle in rad
   double std_radrd_ ;     // Radar measurement noise standard deviation radius change in m/s
 
-  MatrixXd H_laser_;      // Measurement function H matrix
   MatrixXd R_radar_;      // Measurement covariance matrix - radar measurement noise
   MatrixXd R_laser_;      // Measurement covariance matrix - laser measurement noise
+  MatrixXd H_laser_;      // Measurement function H matrix
 
-  VectorXd w_;      // Weights of sigma points
+  VectorXd w_;            // Sigma points weights
 
 public:
-
-  long long previous_timestamp_;     // time when the state is true, in us
-
-  double NIS_radar_;      // the current NIS for radar
-  double NIS_laser_;      // the current NIS for laser
 
   UKF(bool enable_radar = true, bool enable_lidar = true);
   virtual ~UKF();
 
   // Getters
-  VectorXd getx_();
+  VectorXd getx_() {return x_;};
+  double getNIS_radar_() {return NIS_radar_;};
+  double getNIS_laser_() {return NIS_laser_;};
 
-  /**
-   * ProcessMeasurement
-   * @param meas_package The latest measurement data of either radar or laser
-   */
-  void ProcessMeasurement(MeasurementPackage meas_package);
+  // Run the Predict -> Measurement Update process for one measurement
+  bool ProcessMeasurement(MeasurementPackage meas_package);
 
-  /**
-   * Prediction Predicts sigma points, the state, and the state covariance
-   * matrix
-   * @param delta_t Time between k and k+1 in s
-   */
+  // Predicts sigma points, the state, and the state covariance
   MatrixXd Prediction(double delta_t);
 
-  /**
-   * Updates the state and the state covariance matrix using a radar measurement
-   * @param meas_package The measurement at k+1
-   */
-  void UpdateRadar(MeasurementPackage meas_package, MatrixXd Xsig_pred);
-
-  //Step 1
-//  MatrixXd GenerateSigmaPoints();
+  // Generates augmented sigma points
   MatrixXd AugmentedSigmaPoints();
 
-  // Step 2
+  // Predicts sigma points using the process model
   MatrixXd SigmaPointPrediction(MatrixXd Xsig_aug, double delta_t);
 
-  // Step 3
+  // Predicts state mean and covariance
   void PredictMeanAndCovariance(MatrixXd Xsig_pred);
 
-  // Step 4
+  // Predicts radar measurement mean and covariance using the measurement model
   void PredictRadarMeasurement(MatrixXd Xsig_pred, VectorXd* z_pred_out, MatrixXd* S_out, MatrixXd* Zsig_out);
-  void PredictLaserMeasurement(MatrixXd Xsig_pred, VectorXd* z_pred_out, MatrixXd* S_out, MatrixXd* Zsig_out);
 
-  // Step 5
-  void UpdateStateRadar(MatrixXd Xsig_pred, MatrixXd Zsig, VectorXd z_pred, MatrixXd S, VectorXd z);
+  // Updates the state and the state covariance matrix using a radar measurement, computes NIS
+  void UpdateRadar(MatrixXd Xsig_pred, MatrixXd Zsig, VectorXd z_pred, MatrixXd S, VectorXd z);
+
+  // Updates the state and the state covariance matrix using a laser measurement, computes NIS
   void UpdateLaser(VectorXd z);
 };
 
